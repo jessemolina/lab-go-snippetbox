@@ -1,0 +1,5 @@
+#+TITLE: Go Lab - Snippetbox
+
+Snippetbox is a text storage application written in Go.
+
+This project is a learning exercise.
