@@ -3,20 +3,29 @@
 Documented approach taken towards building Snippetbox.
 
 * Foundations
+:PROPERTIES:
+:header-args: :dir ../ :results pp :tangle no
+:END:
 ** Project Setup
+
+Confirm working directory
 
 #+begin_src sh
 pwd
 #+end_src
 
 #+RESULTS:
-: /home/akuma/lab/jessemolina/lab-lets-go
+: ~/lab/jessemolina/lab-go-snippetbox
+
+Initialize project module.
 
 #+begin_src sh
-go mod init jessemolina.xyz/lab-lets-go
+go mod init github.com/jessemolina/lab-go-snippetbox
 #+end_src
 
 #+RESULTS:
+
+Validate use of modules.
 
 #+begin_src sh :results pp
 go env | grep MODULE
@@ -25,38 +34,45 @@ go env | grep MODULE
 #+RESULTS:
 : GO111MODULE="auto"
 
+Verify working go version.
+
+#+begin_src sh
+go version
+#+end_src
+
+#+RESULTS:
+: go version go1.17.5 linux/amd64
+
 ** Web Application Basics
+:PROPERTIES:
+:header-args: :dir ../ :results pp :tangle no
+:END:
+
 
 Three essentials of a web application:
 1. Handler - responsible for executing application logic and writing HTTP response headers and bodies.
 2. Router (servemux) - stores a mapping between the URL patterns for the application and the corresponding handlers; typically one servemux is used for the application containing all the routes.
 3. Web Server - listen for request and serve files; go can establish a web server, avoiding the need for nginx or apache.
 
-#+begin_src go :tangle main.go
+#+begin_src go :tangle ../main.go
 package main
 
 import (
 	"log"
 	"net/http"
 )
-#+end_src
 
-#+begin_src go :tangle main.go
 // define a home hanlder function
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello Snippet!"))
 }
-#+end_src
 
-#+begin_src go :tangle no
-// main
 func main() {
 	// initialize new servemux
 	mux := http.NewServeMux()
 
 	// register the home function as the hanlder for root url
 	mux.HandleFunc("/", home)
-
 
 	// listen and server on 4000
 	log.Println("Starting server on :4000")
@@ -75,19 +91,19 @@ func main() {
 | /snippet/create | createSnippet | create a new snippet       |
 
 
-#+begin_src go :tangle main.go
+#+begin_src go
 func showSnippet(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display this snippet"))
 }
 #+end_src
 
-#+begin_src go :tangle main.go
+#+begin_src go
 func createSnippet(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Create a snippet"))
 }
 #+end_src
 
-#+begin_src go :tangle main.go
+#+begin_src go
 // main
 func main() {
 	// initialize new servemux
@@ -115,7 +131,7 @@ func main() {
 
 *** HTTP Status Codes
 
-#+begin_src go :tangle main.go
+#+begin_src go
 func createSnippet(w http.RequestWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(405)
@@ -153,7 +169,7 @@ curl -i localhost:4000/snippet/create -X POST
 
 *** Customizing Headers
 
-#+begin_src go :tangle main.go
+#+begin_src go
 func createSnippet(w http.RequestWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Use This Instead", http.MethodPost)
@@ -394,7 +410,7 @@ err := srv.ListenAndServe()
 Inject dependencies into the handlers by putting them into a custom application struct, and then define the handler functions as methods against application.
 
 
-#+begin_src go :tangle no main.go
+#+begin_src go
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
@@ -403,7 +419,7 @@ type application struct {
 
 Make the handler a method to the application struct.
 
-#+begin_src go :tangle no handlers.go
+#+begin_src go
 func (app *application) home(w http.ResponseWrite, r *http.Request){
 	...
 }
@@ -449,7 +465,7 @@ touch cmd/web/helpers.go
 
 #+RESULTS:
 
-#+begin_src go :tangle no cmd/web/helpers.go
+#+begin_src go
 package main
 
 import (
