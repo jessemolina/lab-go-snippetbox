@@ -1,0 +1,473 @@
+#+TITLE: Snippetbox Development
+
+Documented approach taken towards building Snippetbox.
+
+* Foundations
+** Project Setup
+
+#+begin_src sh
+pwd
+#+end_src
+
+#+RESULTS:
+: /home/akuma/lab/jessemolina/lab-lets-go
+
+#+begin_src sh
+go mod init jessemolina.xyz/lab-lets-go
+#+end_src
+
+#+RESULTS:
+
+#+begin_src sh :results pp
+go env | grep MODULE
+#+end_src
+
+#+RESULTS:
+: GO111MODULE="auto"
+
+** Web Application Basics
+
+Three essentials of a web application:
+1. Handler - responsible for executing application logic and writing HTTP response headers and bodies.
+2. Router (servemux) - stores a mapping between the URL patterns for the application and the corresponding handlers; typically one servemux is used for the application containing all the routes.
+3. Web Server - listen for request and serve files; go can establish a web server, avoiding the need for nginx or apache.
+
+#+begin_src go :tangle main.go
+package main
+
+import (
+	"log"
+	"net/http"
+)
+#+end_src
+
+#+begin_src go :tangle main.go
+// define a home hanlder function
+func home(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello Snippet!"))
+}
+#+end_src
+
+#+begin_src go :tangle no
+// main
+func main() {
+	// initialize new servemux
+	mux := http.NewServeMux()
+
+	// register the home function as the hanlder for root url
+	mux.HandleFunc("/", home)
+
+
+	// listen and server on 4000
+	log.Println("Starting server on :4000")
+	err := http.ListenAndServe(":4000", mux)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+#+end_src
+
+** Routing Requests
+
+| URL Pattern     | Handler       | Action                     |
+| /               | home          | display the home page      |
+| /snippet        | showSnippet   | display a specific snippet |
+| /snippet/create | createSnippet | create a new snippet       |
+
+
+#+begin_src go :tangle main.go
+func showSnippet(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Display this snippet"))
+}
+#+end_src
+
+#+begin_src go :tangle main.go
+func createSnippet(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Create a snippet"))
+}
+#+end_src
+
+#+begin_src go :tangle main.go
+// main
+func main() {
+	// initialize new servemux
+	mux := http.NewServeMux()
+
+	// register the home function as the hanlder for root url
+	mux.HandleFunc("/", home)
+	mux.HandleFunc("/snippet", showSnippet)
+	mux.HandleFunc("/snippet/create", createSnippet)
+
+	// listen and server on 4000
+	log.Println("Starting server on :4000")
+	err := http.ListenAndServe(":4000", mux)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+#+end_src
+** Customizing HTTP Headers
+
+| Method | Pattern         | Handler       | Action                     |
+| ANY    | /               | home          | display the home page      |
+| ANY    | /snippet        | showSnippet   | display a specific snippet |
+| POST   | /snippet/create | createSnippet | create a new snippet       |
+
+*** HTTP Status Codes
+
+#+begin_src go :tangle main.go
+func createSnippet(w http.RequestWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(405)
+		w.Write([]byte("method not allowed"))
+		return
+	}
+
+	w.Write([]byte("create a new snippet"))
+}
+#+end_src
+
+#+begin_src sh :results pp
+curl -i localhost:4000/snippet/create
+#+end_src
+
+#+RESULTS:
+: HTTP/1.1 405 Method Not Allowed
+: Date: Wed, 16 Feb 2022 22:37:35 GMT
+: Content-Length: 18
+: Content-Type: text/plain; charset=utf-8
+: 
+: method not allowed
+
+#+begin_src sh :results pp
+curl -i localhost:4000/snippet/create -X POST
+#+end_src
+
+#+RESULTS:
+: HTTP/1.1 200 OK
+: Date: Wed, 16 Feb 2022 22:36:36 GMT
+: Content-Length: 20
+: Content-Type: text/plain; charset=utf-8
+: 
+: create a new snippet
+
+*** Customizing Headers
+
+#+begin_src go :tangle main.go
+func createSnippet(w http.RequestWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Use This Instead", http.MethodPost)
+		w.WriteHeader(405)
+		w.Write([]byte("Allowed"))
+		return
+	}
+
+	w.Write([]byte("create a new snippet"))
+}
+#+end_src
+
+#+begin_src sh :results pp
+curl -i localhost:4000/snippet/create
+#+end_src
+
+#+RESULTS:
+: HTTP/1.1 405 Method Not Allowed
+: use this instead: POST
+: Date: Wed, 16 Feb 2022 22:43:03 GMT
+: Content-Length: 18
+: Content-Type: text/plain; charset=utf-8
+: 
+: method not allowed
+*** The http.Error Shortcut
+
+#+begin_src go
+func createSnippet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "method not allowed", 405)
+		return
+	}
+
+	w.Write([]byte("create a new snippet"))
+}
+#+end_src
+
+#+begin_src sh :results pp
+curl -i localhost:4000/snippet/create
+#+end_src
+
+#+RESULTS:
+: HTTP/1.1 405 Method Not Allowed
+: Allowed: POST
+: Content-Type: text/plain; charset=utf-8
+: X-Content-Type-Options: nosniff
+: Date: Wed, 16 Feb 2022 22:48:15 GMT
+: Content-Length: 19
+: 
+: method not allowed
+*** Additional Information
+By default, Go automatically generates the Date, Content-Length, and Content-Type headers.
+
+** URL Query Strings
+
+Enable show Snippet pattern URL for query requests.
+
+| Method | Pattern         | Handler       | Action                     |
+| ANY    | /               | home          | display the home page      |
+| ANY    | /snippet?id=1   | showSnippet   | display a specific snippet |
+| POST   | /snippet/create | createSnippet | create a new snippet       |
+
+
+Libarary for string convertion
+
+#+begin_src go
+import "strconv"
+#+end_src
+
+
+#+begin_src go
+func showSnippet(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
+}
+#+end_src
+** Project Structure and Organization
+
+#+begin_src sh :results pp
+tree
+#+end_src
+
+#+RESULTS:
+#+begin_example
+.
+├── cmd
+│   └── web
+│       ├── handlers.go
+│       └── main.go
+├── go.mod
+├── pkg
+├── README.org
+└── ui
+    ├── html
+    └── static
+
+6 directories, 4 files
+#+end_example
+
+#+begin_src sh
+go run ./cmd/web
+#+end_src
+
+#+begin_src sh
+curl localhost:4000/
+#+end_src
+
+#+RESULTS:
+: system online
+
+** HTML Templating and Inheritance
+
+#+begin_src sh
+touch ./ui/html/home.page.tmpl
+#+end_src
+
+#+RESULTS:
+
+** Serving Static Files
+
+#+begin_src sh
+curl https://www.alexedwards.net/static/sb.v130.tar.gz | tar -xvz -C ./ui/static
+#+end_src
+
+#+begin_src sh :results pp
+tree
+#+end_src
+
+#+RESULTS:
+#+begin_example
+.
+├── cmd
+│   └── web
+│       ├── handlers.go
+│       └── main.go
+├── go.mod
+├── makefile
+├── pkg
+├── README.org
+└── ui
+    ├── html
+    │   ├── base.layout.tmpl
+    │   ├── footer.partial.tmpl
+    │   └── home.page.tmpl
+    └── static
+        ├── css
+        │   └── main.css
+        ├── img
+        │   ├── favicon.ico
+        │   └── logo.png
+        └── js
+            └── main.js
+
+9 directories, 12 files
+#+end_example
+*** The http.FileServer handler
+
+| Method | Pattern         | Handler         | Action                       |
+| ANY    | /               | home            | display the home page        |
+| ANY    | /snippet?id=1   | showSnippet     | display a specific snippet   |
+| POST   | /snippet/create | createSnippet   | create a new snippet         |
+| ANY    | /static/        | http.FileServer | serve a specific static file |
+
+
+#+begin_src go
+fileServer := http.FileServer(http.Dir("./ui/static/"))
+#+end_src
+
+#+RESULTS:
+
+** The http.Handler Interface
+* Configuration and Error Handling
+** Managing Configuration Settings
+*** Command-line Flags
+
+#+begin_src sh
+export SNIPPETBOX_ADDR=":9999"
+go run ./cmd/web -addr=$SNIPPETBOX_ADDR
+#+end_src
+
+#+begin_src go
+addr := flag.String("addr", ":4000", "http network address")
+#+end_src
+
+** Leveled Logging
+
+Default.
+
+#+begin_src go
+log.Printf("starting server on %s", *addr)
+err := http.ListenAndServe(*addr, mux)
+log.Fatal(err)
+#+end_src
+
+Leveled.
+
+#+begin_src go
+...
+
+infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+...
+
+infoLog.Printf("starting server on %s", *addr)
+err := http.ListenAndServe(*addr, mux)
+if err != nil {
+	errorLog.Fatal(err)
+}
+
+#+end_src
+
+*** Decoupled Logging
+
+#+begin_src sh
+go run ./cmd/web >> /tmp/info.log 2>>/tmp/error.log
+#+end_src
+
+*** The http.Server Error Log
+
+#+begin_src go
+...
+srv := &http.Server{
+	Addr: *addr,
+	ErrorLog: errorLog,
+	Handler: mux
+}
+...
+err := srv.ListenAndServe()
+#+end_src
+
+** Dependency Injection
+Inject dependencies into the handlers by putting them into a custom application struct, and then define the handler functions as methods against application.
+
+
+#+begin_src go :tangle no main.go
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
+#+end_src
+
+Make the handler a method to the application struct.
+
+#+begin_src go :tangle no handlers.go
+func (app *application) home(w http.ResponseWrite, r *http.Request){
+	...
+}
+#+end_src
+
+*** Closures for Dependency Injections
+Dependency injection for handlers spread across multiple packages required an alternative approach.
+
+Create a config package that exports Application struct and have the handler functions form a closure.
+
+#+begin_src go
+func main() {
+	app := &config.Application{
+		ErrorLog: log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	}
+
+	mux.Handle("/", handlers.Home(app))
+}
+
+#+end_src
+
+#+begin_src go
+func home(app *config.Application) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		...
+		ts, err := template.ParseFiles(files...)
+		if err != nil {
+			app.ErrorLog.Println(err.Error())
+			http.Error(w, "internal server error", 500)
+			return
+		}
+		...
+	}
+}
+#+end_src
+** Centralized Error Handling
+
+Move error handling into helper methods.
+
+#+begin_src sh
+touch cmd/web/helpers.go
+#+end_src
+
+#+RESULTS:
+
+#+begin_src go :tangle no cmd/web/helpers.go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"runtime/debug"
+)
+
+func (app *application) serverError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	app.errorLog.Println(trace)
+}
+
+func (app *application) clientError(w http.ResponseWriter, status int) {
+	http.Error(w http.StatusText(status), status)
+}
+
+func (app *application) notFound(w http.ResponseWriter) {
+	app.clientError(w, http.StatusNotFound)
+}
+#+end_src
