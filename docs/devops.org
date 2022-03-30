@@ -1,0 +1,103 @@
+#+TITLE: DevOps Example
+
+A practical example of using DevOps.
+
+* TODO Objectives [2/4]
+Initial set of objects; expected to be updated as project evolves.
+- [X] find use for datadog/agent on docker
+- [X] setup jenkins on docker
+- [ ] build a ci/cd pipeline
+- [ ] monitor metrics and logs
+* docker config
+** DONE configure jenkins
+:PROPERTIES:
+:header-args: :results pp
+:END:
+*** docker images
+Pull latest image form docker hub.
+#+begin_src sh
+docker pull jenkins/jenkins
+#+end_src
+
+#+begin_src sh
+docker images | grep jenkins
+#+end_src
+
+#+RESULTS:
+: jenkins/jenkins               latest              9c941210afa1   12 hours ago    460MB
+*** docker run
+
+run and jenkins and create the volume
+#+begin_src sh
+docker run -d -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home jenkins/jenkins
+#+end_src
+
+#+RESULTS:
+: 9b26f11182716d7cd41256bb7bdf6e45396ba71d08925886bf759d39776a5896
+** DONE configure datadog agent
+
+:PROPERTIES:
+:header-args: :results pp
+:END:
+
+#+begin_src sh
+docker pull datadog/agent
+#+end_src
+
+#+RESULTS:
+: Using default tag: latest
+: latest: Pulling from datadog/agent
+: 6b01f6caf5dd: Pulling fs layer
+: 6b01f6caf5dd: Verifying Checksum
+: 6b01f6caf5dd: Download complete
+: 6b01f6caf5dd: Pull complete
+: Digest: sha256:2ef4ef739b3809872bc8bb959b19c0fc665d239cae306c7adec95e63deb4ab3c
+: Status: Downloaded newer image for datadog/agent:latest
+: docker.io/datadog/agent:latest
+
+#+begin_src sh
+docker images | grep datadog
+#+end_src
+
+#+RESULTS:
+: datadog/agent                 latest              2efdb068c51a   4 weeks ago     868MB
+
+API key is generated with sign-up.
+#+begin_src sh :vars KEY=fakekeyvalue
+docker run -d --name dd-agent -v /var/run/docker.sock:/var/run/docker.sock:ro -v /proc/:/host/proc/:ro -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro -e DD_API_KEY=$KEY -e DD_SITE="datadoghq.com" gcr.io/datadoghq/agent:7
+#+end_src
+
+#+RESULTS:
+: fdba9c78b209ab8e9f7dde4483e937c096b3a44b1ee578265e2877be9d28a76e
+* TODO jenkins pipeline for docker image
+Develop Jenkins pipeline that will automatically upload docker image to Docker hub when source code is merged into main.
+
+** DONE verify datadog agent is sending jenkins job events
+Jenkins jobs are in DataDog.
+[[https://i.postimg.cc/k4W2spq8/Deepin-Screenshot-select-area-20220330114930.png]]
+
+** TODO fix remote origin url
+
+Jenkins is unable to parse throught the latest commit to main.
+
+#+begin_src example
+Started by user Jesse Molina
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/docker-image-snippetbox
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/docker-image-snippetbox/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/jessemolina/lab-go-snippetbox.git # timeout=10
+Fetching upstream changes from https://github.com/jessemolina/lab-go-snippetbox.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.30.2'
+ > git fetch --tags --force --progress -- https://github.com/jessemolina/lab-go-snippetbox.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/master^{commit} # timeout=10
+ > git rev-parse origin/master^{commit} # timeout=10
+ERROR: Couldn't find any revision to build. Verify the repository and branch configuration for this job.
+Finished: FAILURE
+#+end_src
+
+* IDEA build devops tools on k8s cluster
+Configure jenkins and datadog agent on k8s cluster.

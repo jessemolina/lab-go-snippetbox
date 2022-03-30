@@ -42,7 +42,10 @@ kind-load:
 	cd deploy/k8s/kind/web-snippetbox; kustomize edit set image web-snippetbox=snippetbox-amd64:$(VERSION)
 	kind load docker-image snippetbox-amd64:$(VERSION) --name $(KIND_CLUSTER)
 
-kind-apply:
+kind-apply-jenkins:
+	kubectl apply -f deploy/k8s/base/devops-jenkins
+
+kind-apply-snippetbox:
 	kustomize build deploy/k8s/kind/web-snippetbox | kubectl apply -f -
 
 kind-status:
