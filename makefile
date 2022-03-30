@@ -58,7 +58,7 @@ kind-restart:
 
 kind-update: all kind-load kind-restart
 
-kind-update-apply: sales-api kind-load kind-apply
+kind-update-apply: snippetbox-api kind-load kind-apply
 
 kind-describe:
 	kubectl describe pod -l app=snippetbox
