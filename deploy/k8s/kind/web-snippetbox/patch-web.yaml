@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snippetbox-pod
+  namespace: web-snippetbox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: snippetbox
+  template:
+    metadata:
+      labels:
+        app: snippetbox
+    spec:
+      containers:
+      # snippetbox-api container configuration
+      - name: snippetbox-api
+        resources:
+          limits:
+            cpu: "2000m" # Up to 2 full cores
+          requests:
+            cpu: "1000m" # Use 1 full cores
