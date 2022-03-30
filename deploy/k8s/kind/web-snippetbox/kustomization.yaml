@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base/web-snippetbox/
+patchesStrategicMerge:
+- ./patch-web.yaml
+images:
+- name: snippetbox-api-image
+  newName: snippetbox-amd64
+  newTag: "0.2.0"

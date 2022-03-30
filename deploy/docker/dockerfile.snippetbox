@@ -1,0 +1,27 @@
+# build the go binary
+FROM golang:1.18 as build_snippetbox
+ENV CGO_ENABLED 0
+ARG BUILD_REF
+
+# copy the code into the container
+COPY . /service
+
+# build the snippetbox-api service binary
+WORKDIR /service/cmd/web
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
+# run the go binary
+FROM alpine:3.14
+ARG BUILD_DATE
+ARG BUILD_REF
+COPY --from=build_snippetbox /service/cmd/web/web /service/web
+WORKDIR /service
+CMD ["./web"]
+
+# labels
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.title="sales-api" \
+      org.opencontainers.image.authors="Jesse Molina <jesse@jessemolina.xyz>" \
+      org.opencontainers.image.source="https://github.com/jessemolina/lab-go-snippetbox/" \
+      org.opencontainers.image.revision="${BUILD_REF}" \
+      org.opencontainers.image.vendor="Jesse Molina"
