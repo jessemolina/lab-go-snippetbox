@@ -18,7 +18,7 @@ func showSnippet(w http.ResponseWriter, r *http.Request){
 
 // create a snippet
 func createSnippet(w http.ResponseWriter, r *http.Request){
-	w.Write([]byte("create a snippet"))
+	w.Write([]byte("create a snippet for jenkins"))
 }
 
 func main() {
