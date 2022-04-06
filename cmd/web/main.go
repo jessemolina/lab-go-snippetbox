@@ -7,7 +7,10 @@ import (
 
 // define a home hanlder function
 func home(w http.ResponseWriter, r *http.Request) {
-	w.Header()
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
 	w.Write([]byte("Hello Snippet!"))
 }
 
