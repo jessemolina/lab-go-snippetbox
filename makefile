@@ -5,7 +5,7 @@ VERSION := 0.2.0
 # go
 
 go-run-web:
-	go run cmd/web/main.go
+	go run ./cmd/web
 
 # ==============================================================================
 # docker
