@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>{{template "title" . }} - Snippetbox</title>
+    <title>{{template "title" .}} - Snippetbox</title>
   </head>
   <body>
     <header>
@@ -15,6 +15,7 @@
     <main>
       {{template "main" .}}
     </main>
+    {{template "footer" .}}
   </body>
 </html>
 {{end}}
