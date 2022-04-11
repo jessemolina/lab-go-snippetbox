@@ -29,9 +29,16 @@ func main() {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
+	// overwrite default server to use custom errorLog
+	srv := &http.Server{
+		Addr: 		*addr,
+		ErrorLog: 	errorLog,
+		Handler: 	mux,
+	}
+
 	// listen and server on 4000
 	infoLog.Printf("Starting server on %s", *addr)
-	err := http.ListenAndServe(*addr, mux)
+	err := srv.ListenAndServe()
 	if err != nil {
 		errorLog.Fatal(err)
 	}
