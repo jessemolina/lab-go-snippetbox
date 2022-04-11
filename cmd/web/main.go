@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 
@@ -11,6 +12,10 @@ func main() {
 	// define cli flags
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
+
+	// custom loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// initialize new servemux
 	mux := http.NewServeMux()
@@ -25,9 +30,9 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// listen and server on 4000
-	log.Printf("Starting server on %s", *addr)
+	infoLog.Printf("Starting server on %s", *addr)
 	err := http.ListenAndServe(*addr, mux)
 	if err != nil {
-		log.Fatal(err)
+		errorLog.Fatal(err)
 	}
 }
