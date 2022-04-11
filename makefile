@@ -1,11 +1,12 @@
 SHELL := /bin/bash
 VERSION := 0.2.0
+WEB_PORT = 4000
 
 # ==============================================================================
 # go
 
 go-run-web:
-	go run ./cmd/web
+	go run ./cmd/web -addr=":$(WEB_PORT)"
 
 # ==============================================================================
 # docker
@@ -20,7 +21,8 @@ docker-build-web:
 
 docker-run-web:
 	docker run \
-		-p 4000:4000 \
+		-p $(WEB_PORT):$(WEB_PORT)\
+		-e WEB_PORT=$(WEB_PORT)\
 		snippetbox-amd64:$(VERSION)
 
 # ==============================================================================
