@@ -14,10 +14,11 @@ RUN go build -ldflags "-X main.build=${BUILD_REF}"
 FROM alpine:3.14
 ARG BUILD_DATE
 ARG BUILD_REF
+ENV WEB_PORT 4000
 COPY --from=build_snippetbox /service/cmd/web/web /service/cmd/web
 COPY --from=build_snippetbox /service/ui /service/ui
 WORKDIR /service
-CMD ["./cmd/web"]
+CMD ./cmd/web -addr=":$WEB_PORT"
 
 # labels
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
