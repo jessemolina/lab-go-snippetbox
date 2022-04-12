@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+// application dependencies
+type application struct {
+	errorLog	*log.Logger
+	infoLog 	*log.Logger
+}
+
 
 func main() {
 	// define cli flags
@@ -17,13 +23,19 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// initialize app from struct
+	app := &application{
+		errorLog: 	errorLog,
+		infoLog: 	infoLog,
+	}
+
 	// initialize new servemux
 	mux := http.NewServeMux()
 
 	// register the home function as the hanlder for root url
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet", showSnippet)
-	mux.HandleFunc("/snippet/create", createSnippet)
+	mux.HandleFunc("/", app.home)
+	mux.HandleFunc("/snippet", app.showSnippet)
+	mux.HandleFunc("/snippet/create", app.createSnippet)
 
 	// handle static file directory
 	fileServer := http.FileServer(http.Dir("./ui/static"))
