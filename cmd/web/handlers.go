@@ -10,17 +10,20 @@ import (
 
 // define a home hanlder function
 func home(w http.ResponseWriter, r *http.Request) {
+	// restrict the url from using catch-all pattern
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
 
+	// slice collection of templates to server
 	files := []string{
 		"./ui/html/home.page.tmpl",
 		"./ui/html/base.layout.tmpl",
 		"./ui/html/footer.partial.tmpl",
 	}
 
+	// create template definitions
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		log.Println(err.Error())
@@ -29,7 +32,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = ts.Execute(w, nil)
-
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", 500)
@@ -38,6 +40,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // show specific snippet
 func showSnippet(w http.ResponseWriter, r *http.Request){
+	// enforce positive value snippet id
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		http.NotFound(w, r)
@@ -48,6 +51,7 @@ func showSnippet(w http.ResponseWriter, r *http.Request){
 
 // create a snippet
 func createSnippet(w http.ResponseWriter, r *http.Request){
+	// enforce http post method
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
 		http.Error(w, "method not allowed", 405)
