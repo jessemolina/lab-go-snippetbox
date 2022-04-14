@@ -29,23 +29,12 @@ func main() {
 		infoLog: 	infoLog,
 	}
 
-	// initialize new servemux
-	mux := http.NewServeMux()
-
-	// register the home function as the hanlder for root url
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
-
-	// handle static file directory
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// overwrite default server to use custom errorLog
 	srv := &http.Server{
 		Addr: 		*addr,
 		ErrorLog: 	errorLog,
-		Handler: 	mux,
+		Handler: 	app.routes(),
 	}
 
 	// listen and server on 4000
