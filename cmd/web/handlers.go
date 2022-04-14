@@ -11,7 +11,7 @@ import (
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// restrict the url from using catch-all pattern
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -25,15 +25,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// create template definitions
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		app.serverError(w, err)
 		return
 	}
 
 	err = ts.Execute(w, nil)
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		app.serverError(w, err)
 	}
 }
 
@@ -42,7 +40,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request){
 	// enforce positive value snippet id
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 	fmt.Fprintf(w, "show snippet with ID %d", id)
@@ -53,7 +51,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request){
 	// enforce http post method
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)
-		http.Error(w, "method not allowed", 405)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 	w.Write([]byte("create a snippet"))
