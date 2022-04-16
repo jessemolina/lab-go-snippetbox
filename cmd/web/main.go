@@ -13,7 +13,6 @@ type application struct {
 	infoLog 	*log.Logger
 }
 
-
 func main() {
 	// define cli flags
 	addr := flag.String("addr", ":4000", "HTTP network address")
