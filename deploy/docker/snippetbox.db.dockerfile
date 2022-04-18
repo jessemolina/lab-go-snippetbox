@@ -5,7 +5,7 @@ FROM mysql:5.7.37-debian
 # pip3 install ansible
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.title="jessemolina/snippetbox-dbapi" \
+      org.opencontainers.image.title="jessemolina/snippetbox-db" \
       org.opencontainers.image.authors="Jesse Molina <jesse@jessemolina.xyz>" \
       org.opencontainers.image.source="https://github.com/jessemolina/lab-go-snippetbox/" \
       org.opencontainers.image.revision="${BUILD_REF}" \
