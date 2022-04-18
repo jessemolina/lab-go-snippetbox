@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := 0.2.0
+VERSION := 0.4.0
 DB_PORT = 3306
 WEB_PORT = 4000
 
@@ -12,30 +12,49 @@ go-run-web:
 # ==============================================================================
 # docker
 
+docker-build-db:
+	docker build \
+		-f deploy/docker/snippetbox.db.dockerfile \
+		-t jessemolina/snippetbox-db:$(VERSION) \
+		--build-arg BUILD_REF=$(VERSION) \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		.
 docker-build-web:
 	docker build \
-		-f deploy/docker/dockerfile.snippetbox \
-		-t jessemolina/snippetbox:$(VERSION) \
+		-f deploy/docker/snippetbox.web.dockerfile \
+		-t jessemolina/snippetbox-web:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
+docker-images:
+	docker images "jessemolina/snippetbox*"
+
 docker-run-db:
 	docker run \
+		--name db-snippetbox \
 		-p $(DB_PORT):$(DB_PORT) \
 		-e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
-		-d mysql:latest
+		-d jessemolina/snippetbox-db:$(VERSION)
 
 docker-run-web:
 	docker run \
+		--name web-snippetbox \
 		-p $(WEB_PORT):$(WEB_PORT)\
 		-e WEB_PORT=$(WEB_PORT)\
-		jessemolina/snippetbox:$(VERSION)
+		jessemolina/snippetbox-web:$(VERSION)
+
+docker-sh-db:
+	docker exec \
+		-it db-snippetbox \
+		/bin/sh
+
+
 
 # ==============================================================================
 # run kind k8s cluster
 
-KIND_CLUSTER := lab-go-snippetbox
+KIND_CLUSTER := kind-snippetbox
 
 kind-up:
 	kind create cluster \
