@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 VERSION := 0.2.0
+DB_PORT = 3306
 WEB_PORT = 4000
 
 # ==============================================================================
@@ -14,16 +15,22 @@ go-run-web:
 docker-build-web:
 	docker build \
 		-f deploy/docker/dockerfile.snippetbox \
-		-t snippetbox-amd64:$(VERSION) \
+		-t jessemolina/snippetbox:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
+
+docker-run-db:
+	docker run \
+		-p $(DB_PORT):$(DB_PORT) \
+		-e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+		-d mysql:latest
 
 docker-run-web:
 	docker run \
 		-p $(WEB_PORT):$(WEB_PORT)\
 		-e WEB_PORT=$(WEB_PORT)\
-		snippetbox-amd64:$(VERSION)
+		jessemolina/snippetbox:$(VERSION)
 
 # ==============================================================================
 # run kind k8s cluster
