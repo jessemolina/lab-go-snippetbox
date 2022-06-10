@@ -18,7 +18,10 @@ docker-build-db:
 		-t jessemolina/snippetbox-db:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		--build-arg MYSQL_USER=web \
+		--build-arg MYSQL_PASSWORD=$(shell echo config/secrets/mysql_web_pwd) \
 		.
+
 docker-build-web:
 	docker build \
 		-f deploy/docker/snippetbox.web.dockerfile \
@@ -32,24 +35,22 @@ docker-images:
 
 docker-run-db:
 	docker run \
-		--name db-snippetbox \
+		--name snippetbox-db \
 		-p $(DB_PORT):$(DB_PORT) \
-		-e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
 		-d jessemolina/snippetbox-db:$(VERSION)
 
 docker-run-web:
 	docker run \
-		--name web-snippetbox \
+		--name snippetbox-web \
 		-p $(WEB_PORT):$(WEB_PORT)\
 		-e WEB_PORT=$(WEB_PORT)\
 		jessemolina/snippetbox-web:$(VERSION)
 
+
 docker-sh-db:
 	docker exec \
-		-it db-snippetbox \
+		-it snippetbox-db \
 		/bin/sh
-
-
 
 # ==============================================================================
 # run kind k8s cluster
