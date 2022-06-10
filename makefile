@@ -19,7 +19,8 @@ docker-build-db:
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		--build-arg MYSQL_USER=web \
-		--build-arg MYSQL_PASSWORD=$(shell echo config/secrets/mysql_web_pwd) \
+		--build-arg MYSQL_PASSWORD="$(shell cat config/secrets/mysql_web_pwd)" \
+		--build-arg MYSQL_ROOT_PASSWORD="$(shell cat config/secrets/mysql_root_pwd)" \
 		.
 
 docker-build-web:
