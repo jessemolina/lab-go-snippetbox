@@ -1,0 +1,65 @@
+#+title: deploy/docker
+
+
+* dockerfile.snippetbox
+:PROPERTIES:
+:header-args: :tangle ../deploy/docker/dockerfile.snippetbox
+:END:
+
+** Build the go binary
+Build the go binary from using a golang image.
+
+#+begin_src dockerfile
+# build the go binary
+FROM golang:1.18 as build_snippetbox
+ENV CGO_ENABLED 0
+ARG BUILD_REF
+#+end_src
+
+Copy the entire code directory onto /service directory.
+
+#+begin_src dockerfile
+# copy the code into the container
+COPY . /service
+#+end_src
+
+Set working directory and build the web service binary.
+
+#+begin_src dockerfile
+# build the snippetbox-api service binary
+WORKDIR /service/cmd/web
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+#+end_src
+
+** Run the go binary
+Use alpine as base image.
+
+#+begin_src dockerfile
+# run the go binary
+FROM alpine:3.14
+#+end_src
+
+Set arguments and environment variables.
+
+#+begin_src dockerfile
+# set arguments and variables
+ARG BUILD_DATE
+ARG BUILD_REF
+ENV WEB_PORT 4000
+#+end_src
+
+Copy web and ui.
+
+#+begin_src dockerfile
+# copy web and ui
+COPY --from=build_snippetbox /service/cmd/web/web /service/cmd/web
+COPY --from=build_snippetbox /service/ui /service/ui
+#+end_src
+
+Set working directory and run web.
+
+#+begin_src dockerfile
+# run web
+WORKDIR /service
+CMD ./cmd/web -addr=":$WEB_PORT"
+#+end_src
